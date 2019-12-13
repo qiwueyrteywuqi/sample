@@ -22,36 +22,76 @@ import tkinter as tk
 from tkinter import filedialog
 import tkinter.messagebox
 
-
 def open_file():
-    #window.withdraw()
     file_path = filedialog.askdirectory()
-    file_path_text.set(''+file_path)
-    list_file(file_path)
-    #files = os.listdir(file_path)
-    #for file in files:
-    #    listbox.insert(tk.END, file)
-    #print(file_path, type(file_path))
+    if file_path:
+        file_path_text.set(''+file_path)
+        list_file(file_path)
+    else:
+        return None
     
     
 def list_file(path):
-    listbox.delete(0,tk.END)
-    list_files = os.listdir(path)
-    for file in list_files:
-        listbox.insert(tk.END, file)
+    if path != '':
+        listbox.delete(0,tk.END)
+        list_files = os.listdir(path)
+        for file in list_files:
+            listbox.insert(tk.END, file)
+    else:
+        tk.messagebox.showerror(title = 'Oops', message = 'Please select a file path')
+
     
 def export_file():
     return 0
 
-def WPT():
-    path = file_path_text.get()
-    if path == '':
+def check_parameter(input_path):
+    if input_path == '':
         tk.messagebox.showerror(title = 'Oops', message = 'Please select a file path')
     elif output_label_str.get() == '':
         tk.messagebox.showerror(title='Oops', message = 'Please enter label number')
-    elif output_decomposed_str.get() == '':
-        tk.messagebox.showerror(title='Oops', message = 'Please enter decomposed level number')
+        
+    elif output_label_str.get():
+        try:
+            int(output_label_str.get())
+        except ValueError:
+            tk.messagebox.showerror(title='Oops', message = 'Please enter label number')
+            return False
+        else:
+            if sampling_length_str.get() == '':
+                tk.messagebox.showerror(title='Oops', message = 'Please enter sampling length')
+                return False
+            elif sampling_length_str.get():
+                try:
+                    int(sampling_length_str.get())
+                except ValueError:
+                    tk.messagebox.showerror(title='Oops', message = 'Please enter sampling length')
+                    return False
+                else:
+                    if int(sampling_length_str.get()) < 2:
+                        tk.messagebox.showerror(title='Oops', message = 'Please enter sampling length')
+                        return False
+                    elif output_decomposition_str.get() == '':
+                        tk.messagebox.showerror(title='Oops', message = 'Please enter decomposition level number')
+                    elif output_decomposition_str.get():
+                        try:
+                            int(output_decomposition_str.get())
+                        except ValueError:
+                            tk.messagebox.showerror(title='Oops', message = 'Please enter decomposition level number')
+                            return False
+                        else:
+                            if int(output_decomposition_str.get()) < 0:
+                                tk.messagebox.showerror(title='Oops', message = 'Please enter positive number')
+                                return False
+                            else:
+                                return True
     else:
+        return False
+    
+
+def WPT():
+    path = file_path_text.get()
+    
+    if check_parameter(path):
         files = os.listdir(path)
         input_datas = []
         for file in files:
@@ -70,12 +110,12 @@ def WPT():
         coef=[]
         reC = []
         reS = []
-        decomposed_level = int(output_decomposed_str.get())
+        decomposition_level = int(output_decomposition_str.get())
         for i in range(len(input_datas)):
-            coef.append(np.zeros((pow(2,decomposed_level),1)))
-    
-            wpt = pywt.WaveletPacket(data = input_datas[i], maxlevel = decomposed_level, wavelet = 'db10', mode = 'symmetric')
-            wp_node = [node.path for node in wpt.get_level(decomposed_level,'freq')]
+            coef.append(np.zeros((pow(2,decomposition_level),1)))
+
+            wpt = pywt.WaveletPacket(data = input_datas[i], maxlevel = decomposition_level, wavelet = 'db10', mode = 'symmetric')
+            wp_node = [node.path for node in wpt.get_level(decomposition_level,'freq')]
             index = 0
             for i in range(len(wp_node)):
                 reC.append(np.zeros((1,1)))
@@ -91,12 +131,7 @@ def WPT():
         temp_energy = []
         energy = []
         energy_ss = []
-                #a=[]
-                #for i in range(64):
-                 #   a.append(np.zeros((1,1)))
-                  #  a[i]=sum(map(lambda x:x*x, reS[7][i]))
-                   # b = sum(a)
-
+        
         for i in range(len(reS)):
             for j in range(len(wp_node)):
                 temp_energy.append(np.zeros((1,1)))
@@ -107,7 +142,7 @@ def WPT():
         for i in range(len(energy)):
             energy_ss[i] = math.sqrt(sum(map(lambda x:x*x, energy[i])))
             energy[i] = [x / energy_ss[i] for x in energy[i]]
-            
+        
         label = int(output_label_str.get())
         for i in range(len(energy)):
             energy[i].append(label)
@@ -116,51 +151,89 @@ def WPT():
             for i in range(len(energy)):
                 writer.writerow(energy[i])
         tk.messagebox.showinfo(title='WPT', message = 'Decomposition done !!')
+        
+        
 
 tem_input_datas = []
 input_datas = []
-decomposed_level = 0
+decomposition_level = 0
 
 window = tk.Tk()
 window.title('WPT App')
 window.geometry('800x600')
-
 
 menubar = tk.Menu(window)
 filemenu = tk.Menu(menubar, tearoff = 0)
 menubar.add_cascade(label = 'File', menu = filemenu)
 filemenu.add_command(label = 'Export', command = export_file)
 
-title = tk.Label(window, text = 'Wavelet Packet Decomposition')
-title.config(font = ('Times New Roman', 20))
+input_frame = tk.Frame(window)
+input_frame.pack()
+
+
+
+title = tk.Label(input_frame, text = 'Wavelet Packet Decomposition')
+title.config(font=('Lolita' , 20))
 title.pack()
 
 
-folder_label = tk.Label(window, text = 'Folder Directory')
-folder_label.config(font = ('Times New Roman', 12))
+folder_label = tk.Label(input_frame, text = 'Folder Directory')
+folder_label.config(font = ('Lolita', 12))
 folder_label.pack()
 
-tk.Button(window, text= 'Open', command = open_file).pack()
+open_dict = tk.Button(input_frame, text= 'Open', command = open_file)
+open_dict.pack()
 
 file_path_text = tk.StringVar(window)
-tk.Label(window, textvariable = file_path_text).pack()
+tk.Label(input_frame, textvariable = file_path_text).pack()
 
-listbox = tk.Listbox(window, width = 80)
-listbox.pack()
-scroller = tk.Scrollbar(window)
-#scroller.pack(side = tk.RIGHT, fill = tk.Y)
-#scroller.config(command = listbox.yview)
+listbox_frame = tk.Frame(window, bg = "bisque")
+listbox_frame.pack()
 
-output_frame = tk.Frame(window)
-output_frame.pack(fill=tk.BOTH, pady=5)
-output_label_label = tk.Label(window, text = 'Label').pack()
+listbox = tk.Listbox(listbox_frame, width = 80)
+listbox.pack(side = tk.LEFT)
+scroller = tk.Scrollbar(listbox_frame)
+scroller.config(command = listbox.yview)
+scroller.pack(side = tk.LEFT, fill = tk.Y)
+listbox.config(yscrollcommand = scroller.set)
+
+
+output_frame = tk.Frame(window, width=50, height=50, background="bisque")
+output_frame.pack(pady = 10)
+
+output_frame_left = tk.Frame(output_frame, width=50, height=50)
+output_frame_left.pack(side = tk.LEFT, fill = tk.Y)
+
+output_frame_right = tk.Frame(output_frame, width=50, height=50)
+output_frame_right.pack(side = tk.RIGHT, fill = tk.Y, padx = 10)
+
+#output_frame_bottom = tk.Frame(output_frame, width=50, height=50, background="#b15165")
+#output_frame_bottom.pack(side = tk.BOTTOM, fill = tk.X)
+
+output_label_label = tk.Label(output_frame_left, text = 'Label')
+output_label_label.config(font = ('Lolita', 12))
+output_label_label.pack()
 output_label_str=tk.StringVar()
-output_label_entry = tk.Entry(window, textvariable=output_label_str).pack()
-output_decomposed_label = tk.Label(window, text = 'Decomposition Level').pack()
-output_decomposed_str = tk.StringVar()
-output_decomposed_entry = tk.Entry(window, textvariable = output_decomposed_str).pack()
+output_label_entry = tk.Entry(output_frame_right, textvariable=output_label_str).pack(pady = 3)
 
-wpd_btn = tk.Button(window, text='Start', command = WPT, bg='red').pack()
+
+sampling_length_label = tk.Label(output_frame_left, text = 'Sampling Length')
+sampling_length_label.config(font = ('Lolita', 12))
+sampling_length_label.pack()
+sampling_length_str = tk.StringVar()
+sampling_length_entry = tk.Entry(output_frame_right, textvariable = sampling_length_str).pack(pady = 3.5)
+
+
+output_decomposition_label = tk.Label(output_frame_left, text = 'Decomposition Level')
+output_decomposition_label.config(font = ('Lolita', 12))
+output_decomposition_label.pack()
+output_decomposition_str = tk.StringVar()
+output_decomposition_entry = tk.Entry(output_frame_right, textvariable = output_decomposition_str).pack(pady = 3.5)
+
+output_button_frame = tk.Frame(window, width=50, height=50, background="bisque")
+output_button_frame.pack()
+
+wpd_btn = tk.Button(output_button_frame, text='Start', command = WPT, bg='red').pack(pady = 10)
 
 window.config(menu = menubar)
 window.mainloop()
