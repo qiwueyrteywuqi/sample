@@ -87,34 +87,55 @@ def check_parameter(input_path):
     else:
         return False
     
+    
+    
+def data_sampling(length, data):
+    section_data = []
+    if length > (len(data) / 2):
+        tk.messagebox.showerror(title= 'Oops', message = 'Your sampling length is out of range')
+    else:
+        if (len(data) / length) > int(len(data) / length):
+            section_num = int(len(data) / length) + 1
+        else:
+            section_num = int(len(data) / length)
+        for i in range(section_num):
+            section_data.append( data[length*i:length*(i+1)] )
+    
+    return section_data
+    
+    
 
 def WPT():
     path = file_path_text.get()
-    
     if check_parameter(path):
+        input_data = []
+        sampling_length = int(sampling_length_str.get())
         files = os.listdir(path)
-        input_datas = []
+        
         for file in files:
             if os.path.splitext(file)[1] == '.csv':
-                tem_input_datas = list(csv.reader(open(path + "/" + file,'r')))
-                del tem_input_datas[0]
-                for i in range(len(tem_input_datas)):
-                    tem_input_datas[i].pop(0)
-                tem_input_datas = list(itertools.chain.from_iterable(tem_input_datas))
-                input_datas.append(tem_input_datas)
+                tem_input_data = list(csv.reader(open(path + "/" + file,'r')))
+                del tem_input_data[0]
+                for i in range(len(tem_input_data)):
+                    tem_input_data[i].pop(0)
+                tem_input_data = list(itertools.chain.from_iterable(tem_input_data))
+                input_data.extend(tem_input_data)
                     #tk.messagebox.showerror(title = 'Oops', message = path)
                 #wp = 0
-        wp_node = []
+        sec_data = data_sampling(sampling_length, input_data)
 ############################
 ## Coefficient Initialize ##
+        wp_node = []
         coef=[]
         reC = []
         reS = []
         decomposition_level = int(output_decomposition_str.get())
-        for i in range(len(input_datas)):
+#####################################
+## Decompostion and Reconstruction ##
+        for i in range(len(sec_data)):
             coef.append(np.zeros((pow(2,decomposition_level),1)))
 
-            wpt = pywt.WaveletPacket(data = input_datas[i], maxlevel = decomposition_level, wavelet = 'db10', mode = 'symmetric')
+            wpt = pywt.WaveletPacket(data = sec_data[i], maxlevel = decomposition_level, wavelet = 'db10', mode = 'symmetric')
             wp_node = [node.path for node in wpt.get_level(decomposition_level,'freq')]
             index = 0
             for i in range(len(wp_node)):
@@ -146,6 +167,9 @@ def WPT():
         label = int(output_label_str.get())
         for i in range(len(energy)):
             energy[i].append(label)
+            
+#################
+## File output ##
         with open('Energy_Spectrum_'+ output_label_str.get() + '.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for i in range(len(energy)):
@@ -154,8 +178,8 @@ def WPT():
         
         
 
-tem_input_datas = []
-input_datas = []
+tem_input_data = []
+input_data = []
 decomposition_level = 0
 
 window = tk.Tk()
@@ -198,7 +222,7 @@ scroller.pack(side = tk.LEFT, fill = tk.Y)
 listbox.config(yscrollcommand = scroller.set)
 
 
-output_frame = tk.Frame(window, width=50, height=50, background="bisque")
+output_frame = tk.Frame(window, width=50, height=50)
 output_frame.pack(pady = 10)
 
 output_frame_left = tk.Frame(output_frame, width=50, height=50)
@@ -230,7 +254,7 @@ output_decomposition_label.pack()
 output_decomposition_str = tk.StringVar()
 output_decomposition_entry = tk.Entry(output_frame_right, textvariable = output_decomposition_str).pack(pady = 3.5)
 
-output_button_frame = tk.Frame(window, width=50, height=50, background="bisque")
+output_button_frame = tk.Frame(window, width=50, height=50)
 output_button_frame.pack()
 
 wpd_btn = tk.Button(output_button_frame, text='Start', command = WPT, bg='red').pack(pady = 10)

@@ -4,20 +4,20 @@ Created on Tue Nov 12 09:44:03 2019
 
 @author: Allen
 """
-import os
+#import os
 import tensorflow as tf
 import numpy as np
 import random
 import csv
-import math
+#import math
 import matplotlib.pyplot as ma
 import keras
-from keras.utils import np_utils
+#from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers import Dense,Dropout,Activation,Flatten
 from keras.layers import Conv1D,MaxPooling1D,ZeroPadding1D,normalization
-import pywt
-import itertools
+#import pywt
+#import itertools
 
 
 def show_train_history(train_history, train, validation):
@@ -53,7 +53,7 @@ with open('Energy_Spectrum_3.csv', newline='') as csvfile:
 with open('Energy_Spectrum_4.csv', newline='') as csvfile:
     input_datas.extend(csv.reader(csvfile))
 """
-decomposed_level = 6
+decomposed_level = 4
 
 input_N = len(input_datas)
 input_energy_N = pow(2,decomposed_level)
@@ -134,7 +134,7 @@ CSMC_top = NumX
 sort_J = np.argsort(-J)
 avg_J = J[sort_J[-CSMC_top:]].sum() / CSMC_top
 threshold = J[sort_J[-CSMC_top]]
-Selec = 64
+Selec = 16
 #a = training_data
 #print(sort_J[-CSMC_top:])
 training_data = training_data[:,sort_J[-Selec:]]
@@ -172,6 +172,9 @@ model.save("DNN.h5")
 
 show_train_history(train_history,'accuracy','val_accuracy')
 show_train_history(train_history,'loss','val_loss')
+
+
+
 """
 class DNN:
     

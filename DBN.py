@@ -15,11 +15,11 @@ import numpy as np
 # import Image
 # Utils file
 # Getting the MNIST data provided by Tensorflow
-from tensorflow.examples.tutorials.mnist import input_data
 import csv
 import random
 import matplotlib.pyplot as plt
 import pickle
+from sklearn.metrics import classification_report
 
 # Class that defines the behavior of the RBM
 class RBM(object):
@@ -74,9 +74,12 @@ class RBM(object):
         # Create the Gradients
         positive_grad = tf.matmul(tf.transpose(v0), h0)
         negative_grad = tf.matmul(tf.transpose(v1), h1)
-
+        
+        # CD
+        CD = (positive_grad - negative_grad) / tf.to_float(tf.shape(v0)[0])
+        
         # Update learning rates for the layers
-        update_w = _w + self.learning_rate * (positive_grad - negative_grad) / tf.to_float(tf.shape(v0)[0])
+        update_w = _w + self.learning_rate * CD
         update_vb = _vb + self.learning_rate * tf.reduce_mean(v0 - v1, 0)
         update_hb = _hb + self.learning_rate * tf.reduce_mean(h0 - h1, 0)
 
@@ -219,6 +222,10 @@ class NN(object):
                                                                                  sess.run(predict_op, feed_dict={_a[0]: self._X, y: self._Y}))))
                 print("Validation rating for epoch " + str(i+1) + ": " + str(np.mean(np.argmax(self.vY, axis=1) == \
                                                                                  sess.run(predict_op, feed_dict={_a[0]: self.vX, y: self.vY}))))
+                
+                target_names = ['class 1', 'class 2', 'class 3', 'class 4']
+                print(classification_report(np.argmax(self.vY, axis=1), sess.run(predict_op, feed_dict={_a[0]: self.vX, y: self.vY}), target_names = target_names))
+                
         plt.plot(acc,'b')
         plt.plot(val_acc,'r')
         plt.xlabel("Epoch")
@@ -228,10 +235,7 @@ class NN(object):
         plt.show()
 
 if __name__ == '__main__':
-    # Loading in the mnist data
-    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
-    trX, trY, teX, teY = mnist.train.images, mnist.train.labels, mnist.test.images,\
-        mnist.test.labels
+    # Loading in the data
     
     with open('Energy_Spectrum_1.csv', newline='') as csvfile:
         input_datas = list(csv.reader(csvfile))
@@ -242,7 +246,7 @@ if __name__ == '__main__':
     with open('Energy_Spectrum_4.csv', newline='') as csvfile:
         input_datas.extend(csv.reader(csvfile))
         
-    decomposed_level = 8
+    decomposed_level = 4
 
     input_N = len(input_datas)
     input_energy_N = pow(2,decomposed_level)
@@ -310,3 +314,5 @@ if __name__ == '__main__':
     Pkl_Filename = "DBN_model.pkl"
     with open(Pkl_Filename, 'wb') as file:
         pickle.dump(nNet, file)
+        
+    
