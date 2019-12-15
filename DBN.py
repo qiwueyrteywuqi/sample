@@ -246,7 +246,7 @@ if __name__ == '__main__':
     with open('Energy_Spectrum_4.csv', newline='') as csvfile:
         input_datas.extend(csv.reader(csvfile))
         
-    decomposed_level = 4
+    decomposed_level = 6
 
     input_N = len(input_datas)
     input_energy_N = pow(2,decomposed_level)
@@ -283,7 +283,7 @@ if __name__ == '__main__':
         
         
 
-    RBM_hidden_sizes = [100, 100]  # create 4 layers of RBM with size 785-500-200-50
+    RBM_hidden_sizes = [50, 50]  # create 4 layers of RBM with size 785-500-200-50
     # Since we are training, set input as training data
     inpX = training_data.astype(np.float32)
     #inpX = trX

@@ -53,7 +53,7 @@ with open('Energy_Spectrum_3.csv', newline='') as csvfile:
 with open('Energy_Spectrum_4.csv', newline='') as csvfile:
     input_datas.extend(csv.reader(csvfile))
 """
-decomposed_level = 4
+decomposed_level = 6
 
 input_N = len(input_datas)
 input_energy_N = pow(2,decomposed_level)
@@ -134,7 +134,7 @@ CSMC_top = NumX
 sort_J = np.argsort(-J)
 avg_J = J[sort_J[-CSMC_top:]].sum() / CSMC_top
 threshold = J[sort_J[-CSMC_top]]
-Selec = 16
+Selec = 64
 #a = training_data
 #print(sort_J[-CSMC_top:])
 training_data = training_data[:,sort_J[-Selec:]]
