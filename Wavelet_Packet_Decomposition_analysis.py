@@ -21,6 +21,8 @@ import itertools
 import tkinter as tk
 from tkinter import filedialog
 import tkinter.messagebox
+import matplotlib.pyplot as plt
+import pandas as pd
 
 def open_file():
     file_path = filedialog.askdirectory()
@@ -87,7 +89,38 @@ def check_parameter(input_path):
     else:
         return False
     
+def enable_time_domain():    
+    filemenu.entryconfig("Time domain plot", state = "normal")
     
+def disable_time_domain():
+    filemenu.entryconfig("Time domain plot", state = "disabled")
+
+def time_domain_plot():
+    try :
+        
+        label = output_label_str.get()
+        plt.savefig("Time Domain" + label + ".jpg")
+        plt.show(block = True)
+        tk.messagebox.showinfo(title = "Time domain plot", message = "Image Save!!")
+        disable_time_domain()
+    except:
+        tk.messagebox.showerror(title = "Oops", message = "Save failed")
+
+def time_domain(data):
+    time_series = pd.Series(data, index = np.arange(0, len(data)/10240, 1/10240))
+    time_series = time_series.convert_objects(convert_numeric = True)
+    plt.figure().set_size_inches(14, 10)
+    time_series.plot()
+    plt.title("Time domain",fontsize=18)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+    plt.ylabel("Accelaration (g)")
+    plt.xlabel('Time (s)')
+    #plt.savefig("Time Domain.jpg")
+    #plt.show()
+    
+    #print(time_series)
+ 
     
 def data_sampling(length, data):
     section_data = []
@@ -122,6 +155,8 @@ def WPT():
                 input_data.extend(tem_input_data)
                     #tk.messagebox.showerror(title = 'Oops', message = path)
                 #wp = 0
+        time_domain(input_data)
+        
         sec_data = data_sampling(sampling_length, input_data)
 ############################
 ## Coefficient Initialize ##
@@ -170,17 +205,18 @@ def WPT():
             
 #################
 ## File output ##
-        with open('Energy_Spectrum_'+ output_label_str.get() + '.csv', 'w', newline='') as csvfile:
+        with open(output_DOE_str.get() + '_Energy_Spectrum_' + '0' + output_decomposition_str.get() + '_' + output_label_str.get() + '.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for i in range(len(energy)):
                 writer.writerow(energy[i])
         tk.messagebox.showinfo(title='WPT', message = 'Decomposition done !!')
-        
+        enable_time_domain()
         
 
 tem_input_data = []
 input_data = []
 decomposition_level = 0
+image_plot = False
 
 window = tk.Tk()
 window.title('WPT App')
@@ -189,7 +225,7 @@ window.geometry('800x600')
 menubar = tk.Menu(window)
 filemenu = tk.Menu(menubar, tearoff = 0)
 menubar.add_cascade(label = 'File', menu = filemenu)
-filemenu.add_command(label = 'Export', command = export_file)
+filemenu.add_command(label = 'Time domain plot', command = time_domain_plot)
 
 input_frame = tk.Frame(window)
 input_frame.pack()
@@ -234,6 +270,12 @@ output_frame_right.pack(side = tk.RIGHT, fill = tk.Y, padx = 10)
 #output_frame_bottom = tk.Frame(output_frame, width=50, height=50, background="#b15165")
 #output_frame_bottom.pack(side = tk.BOTTOM, fill = tk.X)
 
+output_DOE_label = tk.Label(output_frame_left, text = 'DOE')
+output_DOE_label.config(font = ('Lolita', 12))
+output_DOE_label.pack()
+output_DOE_str=tk.StringVar()
+output_DOE_entry = tk.Entry(output_frame_right, textvariable = output_DOE_str).pack(pady = 3)
+
 output_label_label = tk.Label(output_frame_left, text = 'Label')
 output_label_label.config(font = ('Lolita', 12))
 output_label_label.pack()
@@ -260,6 +302,10 @@ output_button_frame.pack()
 wpd_btn = tk.Button(output_button_frame, text='Start', command = WPT, bg='red').pack(pady = 10)
 
 window.config(menu = menubar)
+disable_time_domain()
+
+
+
 window.mainloop()
 
 
