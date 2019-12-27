@@ -23,6 +23,8 @@ from tkinter import filedialog
 import tkinter.messagebox
 import matplotlib.pyplot as plt
 import pandas as pd
+import time
+import TimeDomain as TD
 
 def open_file():
     file_path = filedialog.askdirectory()
@@ -97,7 +99,6 @@ def disable_time_domain():
 
 def time_domain_plot():
     try :
-        
         label = output_label_str.get()
         plt.savefig("Time Domain" + label + ".jpg")
         plt.show(block = True)
@@ -105,10 +106,10 @@ def time_domain_plot():
         disable_time_domain()
     except:
         tk.messagebox.showerror(title = "Oops", message = "Save failed")
-
+"""
 def time_domain(data):
     time_series = pd.Series(data, index = np.arange(0, len(data)/10240, 1/10240))
-    time_series = time_series.convert_objects(convert_numeric = True)
+    time_series = pd.to_numeric(time_series)
     plt.figure().set_size_inches(14, 10)
     time_series.plot()
     plt.title("Time domain",fontsize=18)
@@ -120,7 +121,7 @@ def time_domain(data):
     #plt.show()
     
     #print(time_series)
- 
+"""
     
 def data_sampling(length, data):
     section_data = []
@@ -135,7 +136,6 @@ def data_sampling(length, data):
             section_data.append( data[length*i:length*(i+1)] )
     
     return section_data
-    
     
 
 def WPT():
@@ -152,11 +152,14 @@ def WPT():
                 for i in range(len(tem_input_data)):
                     tem_input_data[i].pop(0)
                 tem_input_data = list(itertools.chain.from_iterable(tem_input_data))
-                input_data.extend(tem_input_data)
+                
+                ## delete impulse signal
+                input_data.extend(TD.DataThreshold(tem_input_data, 2))
+                #input_data.extend(tem_input_data)
+                
                     #tk.messagebox.showerror(title = 'Oops', message = path)
                 #wp = 0
-        time_domain(input_data)
-        
+        TD.TimePlot(input_data, 10240)
         sec_data = data_sampling(sampling_length, input_data)
 ############################
 ## Coefficient Initialize ##
@@ -169,8 +172,11 @@ def WPT():
 ## Decompostion and Reconstruction ##
         for i in range(len(sec_data)):
             coef.append(np.zeros((pow(2,decomposition_level),1)))
-
+            start_time = time.time()
             wpt = pywt.WaveletPacket(data = sec_data[i], maxlevel = decomposition_level, wavelet = 'db10', mode = 'symmetric')
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(elapsed_time)
             wp_node = [node.path for node in wpt.get_level(decomposition_level,'freq')]
             index = 0
             for i in range(len(wp_node)):
